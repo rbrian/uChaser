@@ -26,7 +26,7 @@ const int BUTTON_C_PIN = 6;
 //------------------WIFI-NOW Configuration---------------------//
 //MAC address that the packet should be sent to, get this from the receiving device
 //Example receiver device is 58:BF:25:9E:D7:B0
-uint8_t broadcastAddress[] = {0x7C, 0xDF, 0xA1, 0xE3, 0x63, 0x34};
+uint8_t broadcastAddress[] = {0x7C, 0xDF, 0xA1, 0xE3, 0x5E, 0x28};
 
 //The ESP-NOW protocol allows up to 250 bytes to be sent at a time
 typedef struct esp_packet {
@@ -64,7 +64,7 @@ OneButton testButton(BUTTON_C_PIN, true);
 //-------------------------------------------------------------//
 
 //--------------------Simpletimer------------------------------//
-const int packetInterval = 200; //milliseconds
+const int packetInterval = 500; //milliseconds
 
 SimpleTimer timer;
 //-------------------------------------------------------------//
@@ -229,7 +229,7 @@ void setup() {
   display_setup();
   button_setup();
 
-  //timer.setInterval(packetInterval, send_packet); //use this to send packets all the time instead of on button presses only
+  timer.setInterval(packetInterval, send_packet); //use this to send packets all the time instead of on button presses only
   Serial.println("Setup Complete");
   
 
@@ -238,7 +238,7 @@ void setup() {
 void loop() {
   testButton.tick();
   //scanI2cAddresses();
-  //timer.run();
+  timer.run();
 
 
   

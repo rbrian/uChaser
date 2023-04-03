@@ -17,12 +17,21 @@
 
 
 //----------------------Pins Configuration---------------------//
-const int BUTTON_C_PIN = 14;
+const int BUTTON_C_PIN = 6;
+const int SQUELCH_PIN = 2;
+const int DATA_PIN = 18;
 
 //on the esp32-s3-devkitc-1 board i2c pins
 //SCL = 8
 //SDA = 9
 //-------------------------------------------------------------//
+
+const int squelchTimeoutMs = 75;
+
+
+bool displayNeedsUpdating = true;
+int startUs = 0;
+int deltaUs = 0; //number of microseconds between the packet and the last ping from the receiver
 
 
 //------------------WIFI-NOW Configuration---------------------//
@@ -65,17 +74,30 @@ void updateDisplay(){
   display.print("Sequence No: ");
   display.println(currentSequenceNo);
   display.print("Millis: ");
-  display.print(millis());
+  display.println(millis());
+  display.print("Delta MS: ");
+  display.println(deltaUs);
   display.display(); 
-  Serial.println(currentSequenceNo);
+  Serial.println(currentSequenceNo); //todo: this is temporary, just to make sure the thing is working while troubleshooting the display
+  displayNeedsUpdating = false;
 }
 
 void IRAM_ATTR packetReceived(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&packet, incomingData, sizeof(packet));
   
   currentSequenceNo = packet.sequenceNo;
-  updateDisplay(); //it may be better to set a flag, then watch for it in the loop to update the display... not sure if calling this function from here will make the interrupt callback take too long
+  startUs = micros();
+  digitalWrite(SQUELCH_PIN, LOW);
+  //updateDisplay(); //it may be better to set a flag, then watch for it in the loop to update the display... not sure if calling this function from here will make the interrupt callback take too long
+  displayNeedsUpdating = true;
+}
 
+void IRAM_ATTR pingReceived(){
+  //measure the time, then squelch
+  deltaUs = micros() - startUs;
+  digitalWrite(SQUELCH_PIN, HIGH);
+  displayNeedsUpdating = true;
+  Serial.println("ping");
 }
 
 void display_setup() {
@@ -154,6 +176,11 @@ void setup() {
   esp_now_setup();
   display_setup();
   //button_setup();
+  pinMode(SQUELCH_PIN, OUTPUT);
+  digitalWrite(SQUELCH_PIN, HIGH);
+
+  pinMode(DATA_PIN, INPUT);
+  attachInterrupt(DATA_PIN, pingReceived, RISING);
 
   
   Serial.println("Setup Complete");
@@ -167,6 +194,9 @@ void loop() {
   // updateDisplay();
   // delay(500);
 
+  if(displayNeedsUpdating){
+    updateDisplay();
+  }
 
   
 }
