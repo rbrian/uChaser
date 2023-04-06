@@ -14,25 +14,40 @@
 #include <Adafruit_SH110X.h>
 #include <Adafruit_GFX.h>
 #include <OneButton.h>
+#include <AverageValue.h>
 
 
 //----------------------Pins Configuration---------------------//
 const int BUTTON_C_PIN = 6;
 const int SQUELCH_PIN = 2;
-const int DATA_PIN = 18;
+const int LEFT_DATA_PIN = 18;
+const int RIGHT_DATA_PIN = 39;
 
-//on the esp32-s3-devkitc-1 board i2c pins
+//on the esp32-s3-devkitc-1 board i2c pins for the display
 //SCL = 8
 //SDA = 9
 //-------------------------------------------------------------//
 
-const int squelchTimeoutMs = 75;
 
+unsigned long lastPacketMicros = 0;
+volatile bool waitingForPacket = true;
+volatile long lastLeftMicros = 0;
+volatile long lastRightMicros = 0;
+volatile bool leftIntWaiting = false;
+volatile bool rightIntWaiting = false;
 
-bool displayNeedsUpdating = true;
-int startUs = 0;
-int deltaUs = 0; //number of microseconds between the packet and the last ping from the receiver
+int angle = 0;
+int distance = 0;
 
+const int pingTimeoutMicros = 100000; //1000 microseconds in a millisecond
+const long distOffsetMicros = 10; //offset to calibrate the distance calculation.  This represents the time between receiving the packet and receiving the ping, excluding the ping travel time.
+const int avgSampleNum = 6; //number of samples for the running averages
+const int sensorSpacingMm = 223; //millimeters between each ultrasonic receiver
+const float speedOfSoundMmUs = .343; //millimeters per microsecond
+const float speedOfSoundMUs = 3.43;
+
+AverageValue<long> averageAngle(avgSampleNum);
+AverageValue<long> averageDistance(avgSampleNum);
 
 //------------------WIFI-NOW Configuration---------------------//
 //MAC address that the packet should be sent to, get this from the receiving device
@@ -61,6 +76,15 @@ OneButton testButton(BUTTON_C_PIN, true);
 //-------------------------------------------------------------//
 
 
+//Program states
+#define WAITINGFORPACKET 0
+#define WAITINGFORPINGS 1
+#define DOINGMATH 2
+#define STILLWAITINGFORPINGS 3
+#define GOTBOTHPINGS 4
+#define TIMEDOUT 5
+int progState = WAITINGFORPACKET;
+
 
 void updateDisplay(){
   //for testing just put something on the display
@@ -75,33 +99,96 @@ void updateDisplay(){
   display.println(currentSequenceNo);
   display.print("Millis: ");
   display.println(millis());
-  display.print("Delta MS: ");
-  display.println(deltaUs);
+  display.print("Angle: ");
+  display.println(angle);
+  display.print("Distance: ");
+  display.println(distance);
   display.display(); 
-  Serial.println(currentSequenceNo); //todo: this is temporary, just to make sure the thing is working while troubleshooting the display
-  displayNeedsUpdating = false;
 }
 
 void IRAM_ATTR packetReceived(const uint8_t * mac, const uint8_t *incomingData, int len) {
   memcpy(&packet, incomingData, sizeof(packet));
   
+  if(waitingForPacket){ //if waiting, it means we should do stuff.  Otherwise it means this was triggered but something else is already being processed
+    waitingForPacket = false;
+  }
+
   currentSequenceNo = packet.sequenceNo;
-  startUs = micros();
-  digitalWrite(SQUELCH_PIN, LOW);
-  //updateDisplay(); //it may be better to set a flag, then watch for it in the loop to update the display... not sure if calling this function from here will make the interrupt callback take too long
-  displayNeedsUpdating = true;
 }
 
-void IRAM_ATTR pingReceived(){
-  //measure the time, then squelch
-  deltaUs = micros() - startUs;
+void IRAM_ATTR leftPingReceived(){
+  if (leftIntWaiting){
+    lastLeftMicros = micros();
+    leftIntWaiting = false;
+  }
+}
+
+void IRAM_ATTR rightPingReceived(){
+  if (rightIntWaiting){
+    lastRightMicros = micros();
+    rightIntWaiting = false;
+  }
+}
+
+int waitForPings() {
+  if (leftIntWaiting == false && rightIntWaiting == false){
+    //if we're at this point, both pings should be logged
+    Serial.println("Got both pings");
+    return GOTBOTHPINGS;
+  }
+  else if (micros() > lastPacketMicros + pingTimeoutMicros){
+    //if this happens, we have timed out
+    Serial.println("Timed out");
+    return TIMEDOUT;
+  }
+  else {
+    //if we don't have both pings and haven't timed out, it means we're still waiting
+    return STILLWAITINGFORPINGS;
+  }
+}
+
+void doMath() {
+  averageAngle.push(lastLeftMicros - lastRightMicros);
+  averageDistance.push((lastLeftMicros + lastRightMicros) / 2 - lastPacketMicros - distOffsetMicros); //this is storing the calibrated travel time
+
+  angle = acos((speedOfSoundMmUs*averageAngle.average())/sensorSpacingMm) * 57296 / 1000; //end up with an int for the angle.  What are these magic numbers?
+
+  distance = constrain(averageDistance.average() * speedOfSoundMmUs, 10, 100000); //int should be millimeters
+}
+
+void reset() {
+  //reset all the flags for a new loop
+  leftIntWaiting = false;
+  rightIntWaiting = false;
+  waitingForPacket = true;
+  //disable the receivers until the next packet shows up
   digitalWrite(SQUELCH_PIN, HIGH);
-  displayNeedsUpdating = true;
-  Serial.println("ping");
+}
+
+bool waitForPacket(){
+
+  if(waitingForPacket){
+    //if waiting for packet is still true, packet interrupt is just hanging out, and we return false so that the program doesn't advance to the next state
+    return false;
+  }
+  else {
+    //if the packet interrupt has changed it's waiting flag to true, it means we should now be waiting for echoes and the program should advance to the next state
+    //record the time of the packet
+    lastPacketMicros = micros();
+
+    //enable the receivers
+    digitalWrite(SQUELCH_PIN, LOW);
+
+    //enable the echo interrupts
+    leftIntWaiting = true;
+    rightIntWaiting = true;
+    
+    return true;
+  }
 }
 
 void display_setup() {
-  delay(1000); //todo: probably don't need this
+  delay(1000); //todo: probably don't need this delay
   display.begin(0x3C, true);
   display.clearDisplay();
   Serial.println("OLED begun");
@@ -125,10 +212,6 @@ void esp_now_setup() {
 }
 
 
-
-void button_setup() {
-  //testButton.attachClick(test_pulse);
-}
 
 void scanI2cAddresses(){
     byte error, address;
@@ -175,12 +258,15 @@ void setup() {
   Serial.begin(115200);
   esp_now_setup();
   display_setup();
-  //button_setup();
+
   pinMode(SQUELCH_PIN, OUTPUT);
   digitalWrite(SQUELCH_PIN, HIGH);
 
-  pinMode(DATA_PIN, INPUT);
-  attachInterrupt(DATA_PIN, pingReceived, RISING);
+  pinMode(LEFT_DATA_PIN, INPUT);
+  attachInterrupt(LEFT_DATA_PIN, leftPingReceived, RISING);
+
+  pinMode(RIGHT_DATA_PIN, INPUT);
+  attachInterrupt(RIGHT_DATA_PIN, rightPingReceived, RISING);
 
   
   Serial.println("Setup Complete");
@@ -189,13 +275,43 @@ void setup() {
 }
 
 void loop() {
-  //testButton.tick();
-  //scanI2cAddresses();
-  // updateDisplay();
-  // delay(500);
+  if (progState == WAITINGFORPACKET){
+    int packetStatus;
+    packetStatus = waitForPacket();
+      if (packetStatus == true) {
+        //If this comes back true, it means we have received a packet, logged the time, and triggered the sensors
+        //so we can move on to the next state.  If not, it just keeps running the waitForPacket function.
+        progState = WAITINGFORPINGS;
+      }
+    }
 
-  if(displayNeedsUpdating){
-    updateDisplay();
+  else if (progState == WAITINGFORPINGS){
+      //Serial.println("Waiting for pings"); // for some reason without this line, we get repeats of the previous message in domath(), looks timing related
+      int pingStatus;
+      pingStatus = waitForPings();
+      if (pingStatus == TIMEDOUT) {
+        //If it timed out, we should reset everything and go back to waiting for a packet
+        reset();
+        progState = WAITINGFORPACKET;
+      }
+      else if (pingStatus == GOTBOTHPINGS){
+        //If we have both pings, let's move on to doing math
+        progState = DOINGMATH;
+
+      }
+  }
+
+  else if (progState == DOINGMATH){
+      //Serial.println("Doing math");
+      //once we get to this state, just do the math once, then reset for a new loop
+      doMath();
+      updateDisplay();
+      reset();
+      progState = WAITINGFORPACKET;
+  }
+
+  else {
+    Serial.print("Uh oh, how did we get here?");
   }
 
   
