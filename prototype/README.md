@@ -1,6 +1,6 @@
 Prototype receiver and transmitter:
 
-State of this thing as of 4/2/23: transmitter sends on repeat, receiver prints the interval in microseconds to the OLED when (if) it receives something.
+State of this thing as of 4/5/23: transmitter sends on repeat, receiver calculates the distance and angle and puts it on the display
 
 There are two main layers - RF and Ultrasonic.  The RF layer is wifi, using the ESP-NOW protocol.  The transmitting device sends a packet and the receiving one receives it (duh).
 
@@ -23,4 +23,4 @@ For the revision 1 receiver:
 2. When a wifi packet is received, set that pin to low
 3. When the data pin goes high (interrupt pin), log that timestamp and reset the squelch pin to high again
 4. if too much time passes without the data pin changing, set the squelch high and wait for the next packet
-4. Repeat forever
+5. Repeat forever
