@@ -24,3 +24,26 @@ For the revision 1 receiver:
 3. When the data pin goes high (interrupt pin), log that timestamp and reset the squelch pin to high again
 4. if too much time passes without the data pin changing, set the squelch high and wait for the next packet
 5. Repeat forever
+
+
+Component notes:
+ESP32-S3 (this is the lowest model): https://www.lcsc.com/product-detail/WiFi-Modules_Espressif-Systems-ESP32-S3-WROOM-1-N4_C2913197.html
+
+USB-UART CH340c: https://www.lcsc.com/product-detail/USB-ICs_WCH-Jiangsu-Qin-Heng-CH340C_C84681.html
+
+DC-DC Module: https://www.lcsc.com/product-detail/Power-Modules_DEXU-Electronics-K7803M-1000R3_C2916516.html
+
+almost 12 inch cable with JST XH connector: https://www.lcsc.com/product-detail/Dupont-Cable-Terminal-Block-Cable-Electronic-Cable_DEALON-LNN254-100724-300-4P_C5160861.html
+Same cable but double ended: https://www.lcsc.com/product-detail/Dupont-Cable-Terminal-Block-Cable-Electronic-Cable_DEALON-LDS254-100724-300-4P_C5160865.html
+
+XH vertical board connector:
+white: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A_C2908602.html
+black: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-B_C2979570.html
+red: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-R_C2979568.html
+blue: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-L_C2979569.html
+
+XH horizontal board connector: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_BOOMELE-Boom-Precision-Elec-XH-4AW_C21273.html
+
+Qwiic
+Real JST: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_JST-Sales-America-BM04B-SRSS-TB-LF-SN_C160390.html
+Cheap clone: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_JUSHUO-AFC10-S04QCA-00_C2764183.html

@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "uFinder")(type "KiCad")(uri "C:/Users/elliot/Documents/uFollow/prototype/Boards/uFinder.kicad_sym")(options "")(descr ""))
+)
