@@ -1,3 +1,4 @@
 (sym_lib_table
-  (lib (name "uFinder")(type "KiCad")(uri "D:/Projects/Ultrasonic-Direction-Finder-Module/Boards/uFinder.kicad_sym")(options "")(descr ""))
+  (version 7)
+  (lib (name "uFinder")(type "KiCad")(uri "${KIPRJMOD}/../uFinder.kicad_sym")(options "")(descr ""))
 )

@@ -1,57 +1,57 @@
-13157380474112
-Fiducial
-Fiducial_0.5mm_Mask1.5mm
-Circular Fiducial, 0.5mm bare copper, 1.5mm soldermask opening
-fiducial
+13446672707039
+uFinder
+CAT9555YI-T2
+
+
 0
-1
+24
+24
+uFinder
+MBRB1645T4G
+MBRB1645T4G-2
+Diode
 0
-Fiducial
-Fiducial_0.5mm_Mask1mm
-Circular Fiducial, 0.5mm bare copper, 1mm soldermask opening (Level C)
-fiducial
+3
+3
+uFinder
+R_0805_2012Metric_Pad1.20x1.40mm_HandSolder-Shorted
+Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal with elongated pad for handsoldering. (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator
+resistor handsolder
 0
-1
+2
+2
+uFinder
+TLV9002SIDGSR
+
+
 0
-Fiducial
-Fiducial_0.75mm_Mask1.5mm
-Circular Fiducial, 0.75mm bare copper, 1.5mm soldermask opening (Level B)
-fiducial
+10
+10
+uFinder
+TSSOP-28-1EP_4.4x9.7mm_P0.65mm_EP2.85x6.7mmVias
+TSSOP, 28 Pin (JEDEC MO-153 Var AET Pkg.Code U28E-4 https://pdfserv.maximintegrated.com/package_dwgs/21-0108.PDF), generated with kicad-footprint-generator ipc_gullwing_generator.py
+TSSOP SO
 0
-1
+44
+29
+uFinder
+ULTRASONIC_16MM
+
+
 0
-Fiducial
-Fiducial_0.75mm_Mask2.25mm
-Circular Fiducial, 0.75mm bare copper, 2.25mm soldermask opening
-fiducial
+2
+2
+uFinder
+logo
+
+
 0
-1
 0
-Fiducial
-Fiducial_1.5mm_Mask3mm
-Circular Fiducial, 1.5mm bare copper, 3mm soldermask opening
-fiducial
 0
-1
+uFinder
+uFollowLogo
+
+
 0
-Fiducial
-Fiducial_1.5mm_Mask4.5mm
-Circular Fiducial, 1.5mm bare copper, 4.5mm soldermask opening
-fiducial
 0
-1
-0
-Fiducial
-Fiducial_1mm_Mask2mm
-Circular Fiducial, 1mm bare copper, 2mm soldermask opening (Level A)
-fiducial
-0
-1
-0
-Fiducial
-Fiducial_1mm_Mask3mm
-Circular Fiducial, 1mm bare copper, 3mm soldermask opening (recommended)
-fiducial
-0
-1
 0

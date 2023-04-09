@@ -1,5 +1,30 @@
 Prototype receiver and transmitter:
 
+Find out if we can switch to micropython
+
+Firmware wish list:
+-Wifi captive portal
+-Webserver with configuration page.  Can it do WIFI now at the same time as a webserver, possible to display live data?
+-Settings saved to flash using SPIFFS/json
+-Automatic pairing for ESP-NOW (via button press?) https://randomnerdtutorials.com/esp-now-auto-pairing-esp32-esp8266/
+-RGB LED - what are all the statuses we should display on it?
+--Varying color based on angle?
+-Automatic/assisted distance calibration?
+-Enrich the ESP-NOW packet, what are the inputs/parameters?  Is this rapid enough to send analog signals for control?
+-Logic for signal loss, averaging, add hysteresis (is this the right term?)
+-Utilize multiple transmitting transceivers
+-Measure the jitter in ESP-NOW interrupt timing on receiver
+-Two way communication?
+-UART/I2C/SPI/PWM outputs
+
+Hardware wish list:
+-Next revision of receiver board
+-Power supply for transmitter suitable for battery operation
+--Voltage monitoring?
+-Try out switching between multiple tx transcievers for better angle tolerance
+-Figure out which pins to expose
+
+
 State of this thing as of 4/5/23: transmitter sends on repeat, receiver calculates the distance and angle and puts it on the display
 
 There are two main layers - RF and Ultrasonic.  The RF layer is wifi, using the ESP-NOW protocol.  The transmitting device sends a packet and the receiving one receives it (duh).
@@ -34,16 +59,17 @@ USB-UART CH340c: https://www.lcsc.com/product-detail/USB-ICs_WCH-Jiangsu-Qin-Hen
 DC-DC Module: https://www.lcsc.com/product-detail/Power-Modules_DEXU-Electronics-K7803M-1000R3_C2916516.html
 
 almost 12 inch cable with JST XH connector: https://www.lcsc.com/product-detail/Dupont-Cable-Terminal-Block-Cable-Electronic-Cable_DEALON-LNN254-100724-300-4P_C5160861.html
+
 Same cable but double ended: https://www.lcsc.com/product-detail/Dupont-Cable-Terminal-Block-Cable-Electronic-Cable_DEALON-LDS254-100724-300-4P_C5160865.html
 
 XH vertical board connector:
-white: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A_C2908602.html
-black: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-B_C2979570.html
-red: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-R_C2979568.html
-blue: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-L_C2979569.html
+-white: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A_C2908602.html
+-black: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-B_C2979570.html
+-red: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-R_C2979568.html
+-blue: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_HCTL-XH-4A-L_C2979569.html
 
 XH horizontal board connector: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_BOOMELE-Boom-Precision-Elec-XH-4AW_C21273.html
 
 Qwiic
-Real JST: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_JST-Sales-America-BM04B-SRSS-TB-LF-SN_C160390.html
-Cheap clone: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_JUSHUO-AFC10-S04QCA-00_C2764183.html
+-Real JST: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_JST-Sales-America-BM04B-SRSS-TB-LF-SN_C160390.html
+-Cheap clone: https://www.lcsc.com/product-detail/Wire-To-Board-Wire-To-Wire-Connector_JUSHUO-AFC10-S04QCA-00_C2764183.html
