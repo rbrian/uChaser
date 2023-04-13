@@ -1,6 +1,11 @@
 Prototype receiver and transmitter:
 
-*Find out if we can switch to micropython*
+
+4/13 Prototype Receiver Board notes:
+SCL and SDA are swapped
+Mark TX and RX as TX OUT and RX IN or something so it's clear
+the diode drop from USB is too much, it makes the power module drop out.  Replace with a fet
+
 
 
 Firmware wish list:
