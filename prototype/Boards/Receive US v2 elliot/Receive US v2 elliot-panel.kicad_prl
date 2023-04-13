@@ -64,11 +64,11 @@
       39,
       40
     ],
-    "visible_layers": "005ffff_80000001",
+    "visible_layers": "007ffff_80000001",
     "zone_display_mode": 0
   },
   "meta": {
-    "filename": "Receive US v2-panel.kicad_prl",
+    "filename": "Receive US v2 elliot-panel.kicad_prl",
     "version": 3
   },
   "project": {
