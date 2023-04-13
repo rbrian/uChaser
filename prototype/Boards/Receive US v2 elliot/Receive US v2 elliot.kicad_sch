@@ -1990,7 +1990,7 @@
   )
 
   (symbol (lib_id "Device:R") (at 30.48 58.42 180) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp yes) (fields_autoplaced)
     (uuid 583cea56-d2da-44d9-9dd7-e49ff0d00ac9)
     (property "Reference" "R19" (at 33.02 57.785 0)
       (effects (font (size 1.27 1.27)) (justify right))
