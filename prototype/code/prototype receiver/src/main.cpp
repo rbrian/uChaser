@@ -18,7 +18,6 @@
 #include <fastled.h>
 #include "main.h"
 #include "led.h"
-#include "globals.h"
 
 unsigned long lastPacketMicros = 0;
 volatile bool waitingForPacket = true;
@@ -259,11 +258,9 @@ void scanI2cAddresses()
     Serial.println("done\n");
 }
 
-LED curLED;
-
 void setup()
 {
-  curLED.Setup();
+  LED::GetInstance()->Setup();
 
   Serial.begin(115200);
   esp_now_setup();
@@ -273,7 +270,7 @@ void setup()
   if (digitalRead(ENABLE_AP_PIN) == LOW)
   {
     // enable access point
-    curLED.AddLoop(CRGB::Black);
+    LED::GetInstance()->AddLoop(CRGB::Red);
   }
 
   pinMode(SQUELCH_PIN, OUTPUT);

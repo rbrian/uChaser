@@ -16,7 +16,15 @@ private:
   long lastmilli = 0;
   int curloop = 0;
 
+protected:
+  LED();
+
 public:
+  LED(LED &other) = delete;
+  void operator=(const LED &) = delete;
+
+  static LED *GetInstance();
+
   void Setup();
   void SetLED(CRGB color);
   void AddLoop(CRGB color);

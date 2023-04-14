@@ -5,11 +5,15 @@
 #include "setting.h"
 #include "utils.h"
 
-AccessPoint::AccessPoint()
+static AccessPoint *accessPoint_ = nullptr;
+
+AccessPoint::AccessPoint() {}
+
+AccessPoint *AccessPoint::GetInstance()
 {
-  //  server(80);
-  // ws("/ws");
-  me = this;
+  if (accessPoint_ == nullptr)
+    accessPoint_ = new AccessPoint();
+  return accessPoint_;
 }
 
 void AccessPoint::initWebSocket()
@@ -68,7 +72,7 @@ void AccessPoint::serverSetup()
 
 void AccessPoint::startWifi()
 {
-  WiFi.softAP(Setting::Current()->ssid.c_str(), Setting::Current()->password.c_str());
+  WiFi.softAP(Setting::GetInstance()->ssid.c_str(), Setting::GetInstance()->password.c_str());
   Serial.println("Wifi Initialized");
   // This is the point that there will be a brownout when powered by USB
 
@@ -89,7 +93,7 @@ void AccessPoint::stopWifi()
 // Websocket stuff - send and receive
 void AccessPoint::onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
 {
-  me->internalOnEvent(server, client, type, arg, data, len);
+  accessPoint_->internalOnEvent(server, client, type, arg, data, len);
 }
 
 void AccessPoint::internalOnEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
@@ -116,8 +120,8 @@ void AccessPoint::internalOnEvent(AsyncWebSocket *server, AsyncWebSocketClient *
 void AccessPoint::publishSettings()
 { // push the acceleration, interval, and steps per degree to the web interface, on boot only?  no changes possible from the physical buttons
   Serial.println("Publishing settings to websocket");
-  ws.textAll(String("U" + Setting::Current()->ssid));
-  ws.textAll("V" + Setting::Current()->password);
+  ws.textAll(String("U" + Setting::GetInstance()->ssid));
+  ws.textAll("V" + Setting::GetInstance()->password);
 }
 
 void AccessPoint::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
@@ -131,7 +135,7 @@ void AccessPoint::handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 
     if (strcmp((char *)data, "restartwifi") == 0)
     { // restart wifi
-      Setting::Current()->writeJSON();
+      Setting::GetInstance()->writeJSON();
       this->inputProcessor(WIFIRESTART);
     }
 
@@ -173,11 +177,11 @@ void AccessPoint::inputProcessor(int command, String commandValue)
   {
   case WIFISSID:
     Serial.println("Update SSID Command");
-    Setting::Current()->ssid = commandValue;
+    Setting::GetInstance()->ssid = commandValue;
     break;
   case WIFIPASSWORD:
     Serial.println("Update Password Command");
-    Setting::Current()->password = commandValue;
+    Setting::GetInstance()->password = commandValue;
     break;
   case WIFIRESTART:
     Serial.println("Restart Wifi Command");
@@ -185,18 +189,18 @@ void AccessPoint::inputProcessor(int command, String commandValue)
     break;
   case RESETDEFAULTS:
     Serial.println("Reset default settings Command");
-    Setting::Current()->reset();
+    Setting::GetInstance()->reset();
     publishSettings();
     break;
   case RESETWIFI:
     Serial.println("Reset wifi credentials Command");
-    Setting::Current()->resetWifi();
-    Setting::Current()->writeJSON(); // have to do this here or it will reboot before saving
+    Setting::GetInstance()->resetWifi();
+    Setting::GetInstance()->writeJSON(); // have to do this here or it will reboot before saving
     Utils::reboot();
     break;
   }
   if (SaveSettings)
   { // save settings to JSON, except speed command because it can come so rapidly
-    Setting::Current()->writeJSON();
+    Setting::GetInstance()->writeJSON();
   }
 }

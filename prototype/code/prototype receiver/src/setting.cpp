@@ -2,9 +2,19 @@
 #include "SPIFFS.h"
 #include <ArduinoJson.h>
 
+static Setting *setting_ = nullptr;
+
+Setting::Setting(){}
+
+Setting *Setting::GetInstance()
+{
+  if (setting_ == nullptr)
+    setting_ = new Setting();
+  return setting_;
+}
+
 void Setting::reset()
 { // reset most things, but not wifi
-  foo = d_foo;
 }
 
 void Setting::resetWifi()
@@ -17,8 +27,8 @@ void Setting::writeJSON()
 { // write the global variables for speed etc to a file
   Serial.println("saving settings");
   StaticJsonDocument<512> doc;
-  doc["ssid"] = String(Setting::Current()->ssid);
-  doc["password"] = String(Setting::Current()->password);
+  doc["ssid"] = String(Setting::GetInstance()->ssid);
+  doc["password"] = String(Setting::GetInstance()->password);
 
   SPIFFS.remove("/settings.json");
 
@@ -36,7 +46,3 @@ void Setting::writeJSON()
   configFile.close();
 }
 
-Setting *Setting::Current()
-{
-  return setting;
-}

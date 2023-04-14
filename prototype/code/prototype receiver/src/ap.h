@@ -17,16 +17,21 @@ private:
 
   DNSServer dnsServer;
 
-  static AccessPoint *me;
-
   static void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
   void internalOnEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
   void publishSettings();
   void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
   void inputProcessor(int command, String commandValue = "");
 
-public:
+protected:
   AccessPoint();
+
+public:
+  AccessPoint(AccessPoint &other) = delete;
+  void operator=(const AccessPoint &) = delete;
+
+  static AccessPoint *GetInstance();
+
   void initWebSocket();
   void serverSetup();
   void startWifi();

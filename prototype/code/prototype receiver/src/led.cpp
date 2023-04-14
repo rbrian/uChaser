@@ -1,6 +1,17 @@
 #include "led.h"
 #include <FastLED.h>
 
+static LED *led_ = nullptr;
+
+LED::LED() {}
+
+LED *LED::GetInstance()
+{
+  if (led_ == nullptr)
+    led_ = new LED();
+  return led_;
+}
+
 void LED::Setup()
 {
   FastLED.addLeds<NEOPIXEL, 38>(leds, NUM_LEDS);
