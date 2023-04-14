@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+</head>
+
+
+<script>
+    var gateway = `ws://${window.location.hostname}/ws`;
+    var websocket;
+    function initWebSocket() {
+        console.log('Trying to open a WebSocket connection...');
+        websocket = new WebSocket(gateway);
+        websocket.onopen = onOpen;
+        websocket.onclose = onClose;
+        websocket.onmessage = onMessage; // <-- add this line
+    }
+    function onOpen(event) {
+        console.log('Connection opened');
+    }
+
+    function onClose(event) {
+        console.log('Connection closed');
+        setTimeout(initWebSocket, 2000);
+    }
+
+    function onMessage(event) {
+        var state;
+        var speed;
+        document.getElementById('state').innerHTML = event.data;
+        console.log(event.data);
+        if (event.data == "R1") {
+            state = "Stop";
+            document.getElementById('runbutton').innerHTML = state;
+        }
+        else if (event.data == "R0") {
+            state = "Run";
+            document.getElementById('runbutton').innerHTML = state;
+        }
+        else if (event.data.charAt(0) == "S") {
+            document.getElementById('speed').value = event.data.substring(1);
+            document.getElementById('rangeval').innerHTML = event.data.substring(1);
+        }
+        else if (event.data == "D0") {
+            document.getElementById('direction').innerHTML = "Clockwise";
+        }
+        else if (event.data == "D1") {
+            document.getElementById('direction').innerHTML = "Counter-Clockwise";
+        }
+        else if (event.data.charAt(0) == "A") {
+            document.getElementById('accel').value = event.data.substring(1);
+            document.getElementById('accelval').innerHTML = event.data.substring(1);
+        }
+        else if (event.data.charAt(0) == "I") {
+            document.getElementById('interval').value = event.data.substring(1);
+        }
+        else if (event.data.charAt(0) == "X") {
+            document.getElementById('stepsperdegree').value = event.data.substring(1);
+        }
+        else if (event.data.charAt(0) == "P") {
+            document.getElementById('pause').value = event.data.substring(1);
+        }
+        else if (event.data.charAt(0) == "C") {
+            document.getElementById('intervalcount').value = event.data.substring(1);
+        }
+        else if (event.data.charAt(0) == "T") {
+            if (event.data.substring(1) == 0) {
+                document.getElementById('enableshutter').checked = false;
+            }
+            else {
+                document.getElementById('enableshutter').checked = true;
+            }
+        }
+        else if (event.data.charAt(0) == "H") {
+            if (event.data.substring(1) == 0) {
+                document.getElementById('holdcheckbox').checked = false;
+            }
+            else {
+                document.getElementById('holdcheckbox').checked = true;
+            }
+        }
+        else if (event.data.charAt(0) == "M") {
+            console.log("Got a mode update");
+            if (event.data.substring(1) == 0) {
+                document.getElementById('radio1').click();
+                console.log("selecting mode 1");
+            }
+            else if (event.data.substring(1) == 1) {
+                document.getElementById('radio2').click();
+                console.log("selecting mode 2");
+            }
+            else if (event.data.substring(1) == 2) {
+                document.getElementById('radio3').click();
+                console.log("selecting mode 3");
+            }
+            else if (event.data.substring(1) == 3) {
+                document.getElementById('radio4').click();
+                console.log("selecting mode 4");
+            }
+        }
+        else if (event.data.charAt(0) == "U") {
+            document.getElementById('ssid').value = event.data.substring(1);
+        }
+        else if (event.data.charAt(0) == "V") {
+            document.getElementById('password').value = event.data.substring(1);
+        }
+
+        //speed will be a number with an S in front
+        //acceleration will be a number witn an A in front.  It will only be sent once on bootup
+        //interval will be a number with an I in front
+        //steps per degree will be a number with an X in front
+    }
+
+    window.addEventListener('load', onLoad);
+
+    function onLoad(event) {
+        initWebSocket();
+        initButtons();
+    }
+
+    function initButtons() {
+        document.getElementById('mode1').addEventListener('click', changeMode1);
+        document.getElementById('mode2').addEventListener('click', changeMode2);
+        document.getElementById('mode3').addEventListener('click', changeMode3);
+        document.getElementById('mode4').addEventListener('click', changeMode4);
+        document.getElementById('runbutton').addEventListener('click', toggle);
+        document.getElementById('enable').addEventListener('click', toggleEnable);
+        document.getElementById('speed').addEventListener('input', speedChange);
+        document.getElementById('direction').addEventListener('click', toggleDirection);
+        document.getElementById('accel').addEventListener('input', accelChange);
+        document.getElementById('interval').addEventListener('input', intervalChange);
+        document.getElementById('stepsperdegree').addEventListener('input', stepsChange);
+        document.getElementById('shutterbutton').addEventListener('click', shutter);
+        document.getElementById('pause').addEventListener('input', pauseChange);
+        document.getElementById('intervalcount').addEventListener('input', intervalCountChange);
+        document.getElementById('savewifi').addEventListener('click', saveWifi);
+        document.getElementById('resetdefaults').addEventListener('click', resetDefaults);
+    }
+
+    function toggle() {
+        websocket.send('toggle');
+    }
+
+    function toggleEnable() {
+        websocket.send('enable');
+    }
+
+    function toggleDirection() {
+        websocket.send('direction');
+    }
+
+    function changeMode1() {
+        websocket.send('m0');
+    }
+
+    function changeMode2() {
+        websocket.send('m1');
+    }
+
+    function changeMode3() {
+        websocket.send('m2');
+    }
+
+    function changeMode4() {
+        websocket.send('m3');
+    }
+
+    function speedChange() {
+        websocket.send('s' + document.getElementById('speed').value);
+    }
+
+    function accelChange() {
+        websocket.send('a' + document.getElementById('accel').value);
+    }
+
+    function intervalChange() {
+        websocket.send('i' + document.getElementById('interval').value);
+    }
+
+    function stepsChange() {
+        websocket.send('x' + document.getElementById('stepsperdegree').value);
+    }
+
+    function pauseChange() {
+        websocket.send('p' + document.getElementById('pause').value);
+    }
+
+    function intervalCountChange() {
+        websocket.send('c' + document.getElementById('intervalcount').value);
+    }
+
+    function shutter() {
+        websocket.send('shutter');
+    }
+
+    function saveWifi() {
+        websocket.send('u' + document.getElementById('ssid').value);
+        websocket.send('v' + document.getElementById('password').value);
+        websocket.send('restartwifi');
+    }
+
+    function resetDefaults() {
+        websocket.send('resetdefaults');
+    }
+
+    function shutterCheckbox(checkbox) {
+        //checkboxes are inconsistent with how I did the other elements on the page.
+        if (checkbox.checked) {
+            //console.log("The check box is checked.");
+            websocket.send('t1');
+        }
+        else {
+            //console.log("The check box is not checked.");
+            websocket.send('t0');
+        }
+    }
+
+    function holdCheckbox(checkbox) {
+        //checkboxes are inconsistent with how I did the other elements on the page.
+        if (checkbox.checked) {
+            //console.log("The check box is checked.");
+            websocket.send('h1');
+        }
+        else {
+            //console.log("The check box is not checked.");
+            websocket.send('h0');
+        }
+    }
+
+</script>
+
+<body>
+
+    <div class="container">
+
+        <div class="row justify-content-center">
+            <a href="index.html" class="link-primary">Back</a>
+        </div>
+
+        <div class="row justify-content-center">
+
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                <label class="btn btn-secondary btn-mode active" id="mode1">
+                    <input type="radio" name="options" id="radio1" autocomplete="off" checked> Continuous
+                </label>
+                <label class="btn btn-secondary btn-mode" id="mode2">
+                    <input type="radio" name="options" id="radio2" autocomplete="off"> Step
+                </label>
+                <label class="btn btn-secondary btn-mode" id="mode3">
+                    <input type="radio" name="options" id="radio3" autocomplete="off"> Full 360
+                </label>
+                <label class="btn btn-secondary btn-mode" id="mode4">
+                    <input type="radio" name="options" id="radio4" autocomplete="off"> Set
+                </label>
+            </div>
+
+        </div>
+
+
+        <div class="row justify-content-center mt-3">
+            <button type="button" id="runbutton" class="btn btn-success btn-block btn-lg btn-startstop">Run</button>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="form-group w-100 mt-5">
+
+                <input type="range" id="speed" class="form-control-range" id="formControlRange"
+                    onInput="$('#rangeval').html($(this).val())" value="10" min="1">
+
+                <div class="row justify-content-center">
+                    <span>Speed: </span>
+                    <span id="rangeval">None
+                        <!-- Default value -->
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center mt-3" id="shutterdiv">
+            <button type="button" id="shutterbutton"
+                class="btn btn-success btn-block btn-lg btn-startstop">Shutter</button>
+        </div>
+
+        <div class="row justify-content-center mt-3">
+            <button type="button" id="direction" class="btn btn-secondary btn-lg"
+                data-toggle="button">Clockwise</button>
+        </div>
+        <hr>
+
+        <div class="row justify-content-center mt-3">
+            <button type="button" id="enable" class="btn btn-secondary btn-lg"
+                data-toggle="button">Enable/Disable</button>
+        </div>
+
+        <div class="row justify-content-center mt-3">
+            <div class="form-group">
+                <label for="interval">Step Interval (Degrees):</label>
+                <input type="number" class="form-control" id="interval" name="interval">
+            </div>
+        </div>
+
+        <div class="row justify-content-center mt-3">
+            <div class="form-group">
+                <label for="interval">Number of intervals:</label>
+                <input type="number" class="form-control" id="intervalcount" name="intervalcount">
+            </div>
+        </div>
+
+        <div class="row justify-content-center mt-3">
+            <div class="form-group">
+                <label for="pause">Set Pause Length (ms):</label>
+                <input type="number" class="form-control" id="pause" name="pause">
+            </div>
+            <span>Delay time after stopping before triggering the shutter and before moving again in photo set mode. For
+                a time lapse, total time between shots will be roughly double this number.</span>
+        </div>
+
+        <div class="row justify-content-center mt-3">
+            <form>
+                <div class="form-group">
+
+                    <input type="range" id="accel" class="form-control-range" id="formControlRange" min="100"
+                        max="10000" step="10" onInput="$('#accelval').html($(this).val())" value="0">
+                    <span>Acceleration: </span>
+                    <span id="accelval">100
+                        <!-- Default value -->
+                    </span>
+                </div>
+            </form>
+        </div>
+
+        <div class="row justify-content-center mt-5">
+            <form>
+                <div class="form-group">
+                    <label for="stepsperdegree">Step Per Degree:</label>
+                    <input type="number" class="form-control" id="stepsperdegree" name="stepsperdegree">
+                </div>
+            </form>
+        </div>
+
+        <div class="row justify-content-center mt-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="enableshutter"
+                    onclick="shutterCheckbox(this)">
+                <label class="form-check-label" for="flexCheckDefault">
+                    Enable Shutter
+                </label>
+            </div>
+            <span>This requires a physical connection to the output pins at this time</span>
+        </div>
+
+        <div class="row justify-content-center mt-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="holdcheckbox" onclick="holdCheckbox(this)">
+                <label class="form-check-label" for="flexCheckDefault">
+                    Hold position when idle
+                </label>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <p class="state">Last message: <span id="state">N/A</span></p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="form-group">
+                <label for="ssid">SSID:</label>
+                <input type="text" class="form-control" id="ssid">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="text" class="form-control" id="password">
+            </div>
+            <button type="button" id="savewifi" class="btn btn-secondary btn-lg" data-toggle="button">Save</button>
+        </div>
+
+        <div class="row justify-content-center mt-3">
+            <button type="button" id="resetdefaults" class="btn btn-secondary btn-lg" data-toggle="button">Restore Default Settings</button>
+        </div>
+
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/scripts.js"></script>
+</body>
+
+</html>
