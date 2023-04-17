@@ -1,14 +1,5 @@
 {
-    "speed": "14",
-    "acceleration": "1000",
-    "steps_per_degree": "54",
-    "direction": "0",
-    "shutter_enable": "0",
-    "hold": "0",
-    "pause": "1000",
-    "interval_count": "6",
-    "interval_degrees": "10",
-    "ssid":"Photo_Booth",
-    "password":"",
-    "mode":"0"
+    "num_avg_samples": "6",
+    "distance_between_receivers_mm": "850",
+    "output_method": "UART"
 }

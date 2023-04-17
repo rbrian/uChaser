@@ -1,4 +1,5 @@
 #include "led.h"
+#include "main.h"
 #include <FastLED.h>
 
 static LED *led_ = nullptr;
@@ -14,7 +15,8 @@ LED *LED::GetInstance()
 
 void LED::Setup()
 {
-  FastLED.addLeds<NEOPIXEL, 38>(leds, NUM_LEDS);
+  FastLED.addLeds<NEOPIXEL, RGB_LED_PIN>(leds, NUM_LEDS);
+  FastLED.setBrightness(10);
 }
 
 void LED::SetLED(CRGB color)

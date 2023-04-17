@@ -70,7 +70,7 @@ void AccessPoint::serverSetup()
   server.begin();
 }
 
-void AccessPoint::startWifi()
+void AccessPoint::start()
 {
   WiFi.softAP(Setting::GetInstance()->ssid.c_str(), Setting::GetInstance()->password.c_str());
   Serial.println("Wifi Initialized");
@@ -79,13 +79,17 @@ void AccessPoint::startWifi()
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
 
+  serverSetup();
+  initWebSocket();
+
   Active = true;
 }
 
-void AccessPoint::stopWifi()
+void AccessPoint::stop()
 {
   Serial.println("Disabling Wifi");
   WiFi.softAPdisconnect(true);
+  server.end();
 
   Active = false;
 }
@@ -189,12 +193,12 @@ void AccessPoint::inputProcessor(int command, String commandValue)
     break;
   case RESETDEFAULTS:
     Serial.println("Reset default settings Command");
-    Setting::GetInstance()->reset();
+    Setting::GetInstance()->restoreDefaults();
     publishSettings();
     break;
   case RESETWIFI:
     Serial.println("Reset wifi credentials Command");
-    Setting::GetInstance()->resetWifi();
+    //Setting::GetInstance()->resetWifi();
     Setting::GetInstance()->writeJSON(); // have to do this here or it will reboot before saving
     Utils::reboot();
     break;

@@ -1,6 +1,10 @@
 #ifndef _AP_H_
 #define _AP_H_
 
+
+#include "ESPAsyncWebServer.h"
+#include "DNSServer.h"
+
 #pragma region ui commands
 #define WIFISSID 0
 #define WIFIPASSWORD 1
@@ -34,8 +38,8 @@ public:
 
   void initWebSocket();
   void serverSetup();
-  void startWifi();
-  void stopWifi();
+  void start();
+  void stop();
 
   bool Active = false;
 };

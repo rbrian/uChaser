@@ -6,7 +6,7 @@
 class LED
 {
 private:
-#define NUM_LEDS 60
+#define NUM_LEDS 1
 #define nLoops 5
 #define ledLoopDelay 500
 

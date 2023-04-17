@@ -18,6 +18,8 @@
 #include <fastled.h>
 #include "main.h"
 #include "led.h"
+#include "ap.h"
+#include "SPIFFS.h"
 
 unsigned long lastPacketMicros = 0;
 volatile bool waitingForPacket = true;
@@ -62,6 +64,7 @@ Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 
 //--------------------Button Configuration---------------------//
 OneButton testButton(BUTTON_C_PIN, true);
+OneButton wifiButton(ENABLE_AP_PIN, true);
 //-------------------------------------------------------------//
 
 // Initialize some things
@@ -73,7 +76,8 @@ OneButton testButton(BUTTON_C_PIN, true);
 #define STILLWAITINGFORPINGS 3
 #define GOTBOTHPINGS 4
 #define TIMEDOUT 5
-int progState = WAITINGFORPACKET;
+#define WIFIAP 6
+int progState = WAITINGFORPACKET; //default mode when the main loop starts
 
 void updateDisplay()
 {
@@ -218,60 +222,43 @@ void esp_now_setup()
   esp_now_register_recv_cb(packetReceived);
 }
 
-void scanI2cAddresses()
+void wifiButtonPress()
 {
-  byte error, address;
-  int nDevices;
-
-  Serial.println("Scanning...");
-
-  nDevices = 0;
-  for (address = 1; address < 127; address++)
-  {
-    // The i2c_scanner uses the return value of
-    // the Write.endTransmisstion to see if
-    // a device did acknowledge to the address.
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
-
-    if (error == 0)
-    {
-      Serial.print("I2C device found at address 0x");
-      if (address < 16)
-        Serial.print("0");
-      Serial.print(address, HEX);
-      Serial.println("  !");
-
-      nDevices++;
-    }
-    else if (error == 4)
-    {
-      Serial.print("Unknown error at address 0x");
-      if (address < 16)
-        Serial.print("0");
-      Serial.println(address, HEX);
-    }
+  Serial.println("Wifi button pushed");
+  if (progState == WIFIAP){
+    //Stop the AP and webserver
+    //todo: if the interrupts were disabled, turn them back on
+    LED::GetInstance()->SetLED(CRGB::Red);
+    progState = WAITINGFORPACKET;
+    AccessPoint::GetInstance()->stop();
   }
-  if (nDevices == 0)
-    Serial.println("No I2C devices found\n");
-  else
-    Serial.println("done\n");
+  else {
+    //Start the AP and webserver
+    //todo: should the interrupts be disabled?
+    progState = WIFIAP;
+    AccessPoint::GetInstance()->start();
+    LED::GetInstance()->SetLED(CRGB::Blue);
+  }  
 }
 
 void setup()
 {
-  LED::GetInstance()->Setup();
-
   Serial.begin(115200);
   esp_now_setup();
   display_setup();
 
-  pinMode(ENABLE_AP_PIN, INPUT_PULLUP);
-  if (digitalRead(ENABLE_AP_PIN) == LOW)
+  LED::GetInstance()->Setup();
+  LED::GetInstance()->SetLED(CRGB::Red);
+
+  if (!SPIFFS.begin())
   {
-    // enable access point
-    LED::GetInstance()->AddLoop(CRGB::Red);
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
   }
+
+  Setting::GetInstance()->readJSON();
+
+  wifiButton.attachClick(wifiButtonPress);
 
   pinMode(SQUELCH_PIN, OUTPUT);
   digitalWrite(SQUELCH_PIN, HIGH);
@@ -282,11 +269,17 @@ void setup()
   pinMode(RIGHT_DATA_PIN, INPUT);
   attachInterrupt(RIGHT_DATA_PIN, rightPingReceived, RISING);
 
+  
+
   Serial.println("Setup Complete");
+
+  
 }
 
 void loop()
 {
+  wifiButton.tick();
+
   if (progState == WAITINGFORPACKET)
   {
     int packetStatus;
@@ -325,6 +318,15 @@ void loop()
     updateDisplay();
     reset();
     progState = WAITINGFORPACKET;
+  }
+
+  else if(progState == WIFIAP)
+  {
+    //Do nothing in the loop for this state
+    //the webserver and AP should have been started by the function that put it into this state
+    //and we're relying on the webserver stuff to get us out of this state - by putting us back into WAITINGFORPACKET or perhaps just rebooting
+    //todo: should there be a continuous output in this mode, to indicate there is no direction/distance, or maybe the robot connected should halt?
+    //Serial.println("WIFI AP mode");
   }
 
   else
