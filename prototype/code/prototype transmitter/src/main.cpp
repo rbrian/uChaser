@@ -33,7 +33,14 @@ typedef struct esp_packet {
   int32_t sequenceNo = 0;
 } esp_packet;
 
+typedef struct pairing_packet {
+    uint8_t msgType;
+    uint8_t macAddr[6];
+    uint8_t channel;
+} pairing_packet;
+
 esp_packet packet;
+pairing_packet pairing;
 esp_now_peer_info_t peerInfo;
 
 int32_t currentSequenceNo = 0;
@@ -123,6 +130,37 @@ void display_setup() {
   updateDisplay();
 }
 
+void IRAM_ATTR packetReceived(const uint8_t *mac, const uint8_t *incomingData, int len)
+{
+  //this assumes all packets are a pairing, if there are other kinds we should differentiate between them
+  memcpy(&pairing, incomingData, sizeof(pairing));
+
+  Serial.print("Packet receieved with MAC: ");
+
+  for (int i = 0; i < 6; i++) {
+    Serial.print(pairing.macAddr[i], HEX);
+    Serial.print(":");
+  }
+  Serial.println();
+
+  //todo: here would be a good place to save the new MAC to a JSON file
+
+  //register new peer
+
+  memcpy(broadcastAddress, pairing.macAddr, 6);
+
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = 0;  
+  peerInfo.encrypt = false;
+
+  // Add peer        
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
+    return;
+  }
+
+}
+
 void esp_now_setup() {
   //Turn on wifi in station mode
   WiFi.mode(WIFI_STA);
@@ -139,6 +177,8 @@ void esp_now_setup() {
   //This callback function might be the best place to trigger the ultrasonic ping
   //esp_now_register_send_cb(OnDataSent);
 
+  esp_now_del_peer(broadcastAddress);
+
   // Register peer
   memcpy(peerInfo.peer_addr, broadcastAddress, 6);
   peerInfo.channel = 0;  
@@ -149,6 +189,8 @@ void esp_now_setup() {
     Serial.println("Failed to add peer");
     return;
   }
+
+  esp_now_register_recv_cb(packetReceived);
 }
 
 void send_packet() {

@@ -47,13 +47,21 @@ AverageValue<long> averageDistance(avgSampleNum);
 // uint8_t broadcastAddress[] = {0x58, 0xBF, 0x25, 0x9E, 0xD7, 0xB0};
 
 // The ESP-NOW protocol allows up to 250 bytes to be sent at a time (or received in this case)
-typedef struct esp_packet
+typedef struct incoming_packet
 {
   int32_t sequenceNo = 0;
-} esp_packet;
+} incoming_packet;
 
-esp_packet packet;
-// esp_now_peer_info_t peerInfo;
+typedef struct pairing_packet {       // new structure for pairing
+    uint8_t msgType;
+    uint8_t macAddr[6];
+    uint8_t channel;
+} pairing_packet;
+
+incoming_packet packet;
+pairing_packet pairing;
+uint8_t pairingAddress[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+esp_now_peer_info_t peerInfo;
 
 int32_t currentSequenceNo = 0;
 //-------------------------------------------------------------//
@@ -63,7 +71,7 @@ Adafruit_SH1107 display = Adafruit_SH1107(64, 128, &Wire);
 //-------------------------------------------------------------//
 
 //--------------------Button Configuration---------------------//
-OneButton testButton(BUTTON_C_PIN, true);
+OneButton pairingButton(PAIRING_PIN, true);
 OneButton wifiButton(ENABLE_AP_PIN, true);
 //-------------------------------------------------------------//
 
@@ -77,6 +85,7 @@ OneButton wifiButton(ENABLE_AP_PIN, true);
 #define GOTBOTHPINGS 4
 #define TIMEDOUT 5
 #define WIFIAP 6
+#define PAIRING 7
 int progState = WAITINGFORPACKET; //default mode when the main loop starts
 
 void updateDisplay()
@@ -102,6 +111,7 @@ void updateDisplay()
 
 void IRAM_ATTR packetReceived(const uint8_t *mac, const uint8_t *incomingData, int len)
 {
+  //this assumes all packets are a ping, if there are other kinds we should differentiate between them
   memcpy(&packet, incomingData, sizeof(packet));
 
   if (waitingForPacket)
@@ -211,11 +221,27 @@ void esp_now_setup()
   WiFi.mode(WIFI_STA);
   Serial.print("MAC Address: ");
   Serial.println(WiFi.macAddress());
+  Serial.print("Channel: ");
+  Serial.println(WiFi.channel());
+
+  pairing.channel = WiFi.channel();
+  WiFi.macAddress(pairing.macAddr);
 
   // Initialize ESP-NOW
   if (esp_now_init() != ESP_OK)
   {
     Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+
+  // Register peer
+  memcpy(peerInfo.peer_addr, pairingAddress, 6);
+  peerInfo.channel = 0;  
+  peerInfo.encrypt = false;
+
+  // Add peer        
+  if (esp_now_add_peer(&peerInfo) != ESP_OK){
+    Serial.println("Failed to add peer");
     return;
   }
 
@@ -241,6 +267,33 @@ void wifiButtonPress()
   }  
 }
 
+void pairingButtonPress(){
+  if (progState == WIFIAP) {
+    return;
+  }
+  progState = PAIRING;
+  //it may not be necessary to change the program state if everything is contained within this function.  Actually it would be better to use a callback to return the program state
+  Serial.print("Sending out pairing packet to transmitter");
+  //switch program modes for a moment
+  //send out a packet to all addresses
+  //when the transmitter gets it, it should update it's target mac address to this receiver's mac address
+  //receiver can just go back to listening mode
+
+    //the values sent out in this thing are set in esp_now_setup()+
+    esp_err_t result = esp_now_send(pairingAddress, (uint8_t *) &pairing, sizeof(pairing));
+
+    if (result == ESP_OK) {
+      Serial.println("... Success");
+    }
+    else {
+      Serial.print("... Failure: ");
+      Serial.println(esp_err_to_name(result));
+    }
+
+  reset();
+  progState = WAITINGFORPACKET;
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -259,6 +312,7 @@ void setup()
   Setting::GetInstance()->readJSON();
 
   wifiButton.attachClick(wifiButtonPress);
+  pairingButton.attachClick(pairingButtonPress);
 
   pinMode(SQUELCH_PIN, OUTPUT);
   digitalWrite(SQUELCH_PIN, HIGH);
@@ -279,6 +333,7 @@ void setup()
 void loop()
 {
   wifiButton.tick();
+  pairingButton.tick();
 
   if (progState == WAITINGFORPACKET)
   {
@@ -300,6 +355,7 @@ void loop()
     if (pingStatus == TIMEDOUT)
     {
       // If it timed out, we should reset everything and go back to waiting for a packet
+      updateDisplay();
       reset();
       progState = WAITINGFORPACKET;
     }
@@ -327,6 +383,11 @@ void loop()
     //and we're relying on the webserver stuff to get us out of this state - by putting us back into WAITINGFORPACKET or perhaps just rebooting
     //todo: should there be a continuous output in this mode, to indicate there is no direction/distance, or maybe the robot connected should halt?
     //Serial.println("WIFI AP mode");
+  }
+  else if(progState == PAIRING)
+  {
+    //Do nothing in the loop for this state
+    //a packet will be sent out to the transmitter, then the function that sent it will return the program to a regular mode
   }
 
   else

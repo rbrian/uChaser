@@ -5,7 +5,7 @@
 
 #pragma region Pins Configuration
 const int ENABLE_AP_PIN = 5;
-const int BUTTON_C_PIN = 6;
+const int PAIRING_PIN = 6;
 const int SQUELCH_PIN = 2;
 const int LEFT_DATA_PIN = 18;
 const int RIGHT_DATA_PIN = 39;
