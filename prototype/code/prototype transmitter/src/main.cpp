@@ -11,6 +11,10 @@
 #include <Adafruit_GFX.h>
 #include <OneButton.h>
 #include <SimpleTimer.h>
+#include "SPIFFS.h"
+#include <ArduinoJson.h>
+
+#include "setting.h"
 
 
 //----------------------Pins Configuration---------------------//
@@ -159,6 +163,12 @@ void IRAM_ATTR packetReceived(const uint8_t *mac, const uint8_t *incomingData, i
     return;
   }
 
+  //save the new mac address back to JSON
+  Setting::GetInstance()->mac_address_string = Setting::GetInstance()->macIntArrToStr(broadcastAddress);
+  Serial.print("the MAC we are trying to save is: ");
+  Serial.println(Setting::GetInstance()->mac_address_string);
+  Setting::GetInstance()->writeJSON();
+
 }
 
 void esp_now_setup() {
@@ -266,6 +276,16 @@ void scanI2cAddresses(){
 
 void setup() {
   Serial.begin(115200);
+
+  if (!SPIFFS.begin())
+  {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+
+  Setting::GetInstance()->readJSON();
+  memcpy(broadcastAddress, Setting::GetInstance()->mac_address, 6);
+
   esp_now_setup();
   rmt_setup();
   display_setup();
