@@ -1,39 +1,43 @@
 Prototype receiver and transmitter:
 
+Transmitter firmware Todo list:
+- [ ] Refactor to align with receiver code structure
+- [x] JSON storage for settings
+- [x] Automatic pairing with receiver (initiated by receiver)
+- [ ] Add webserver, wifi access point
+- [ ] Create a configuration page
+- [ ] Implement the LED
+- [ ] Remove the display or make it optional (use the qwiic connector)
+- [ ] Get rid of all the serial.print commands everwhere
+- [ ] Enable/disable, to stop the receiver from outputting
 
-4/13 Prototype Receiver Board notes:
-SCL and SDA are swapped
-Mark TX and RX as TX OUT and RX IN or something so it's clear
-the diode drop from USB is too much, it makes the power module drop out.  Replace with a fet
+Receiver firmware todo list:
+- [x] Add webserver, wifi access point
+- [x] JSON storage for settings
+- [x] Automatic pairing - one button
+- [ ] Create a configuration page
+- [ ] Make the LED do more interesting stuff
+- [ ] Remove the display or make it optional (use the qwiic connector)
+- [ ] Get rid of all the serial.print commands everwhere
+- [ ] Outputs: UART, PWM, I2C, SPI, etc?
+- [ ] Enable/Disable from transmitter
+- [ ] Improve the averaging/smoothing.  Throw out bogus values
+- [ ] Handle signal loss or line of sight issues
+- [ ] Measure the jitter in ESP-NOW timing
 
-
-
-Firmware wish list:
-- Wifi captive portal
-- Webserver with configuration page.  Can it do WIFI now at the same time as a webserver, possible to display live data?
-- Settings saved to flash using SPIFFS/json
-- Automatic pairing for ESP-NOW (via button press?) https://randomnerdtutorials.com/esp-now-auto-pairing-esp32-esp8266/
-- RGB LED - what are all the statuses we should display on it?
-    - Varying color based on angle?
-    - Connected or not
-    - Line of sight lost
-- Automatic/assisted distance calibration?
-- Enrich the ESP-NOW packet, what are the inputs/parameters?  Is this rapid enough to send analog signals for control?
-- Logic for signal loss, averaging, add hysteresis (is this the right term?)
-- Utilize multiple transmitting transceivers
-- Measure the jitter in ESP-NOW interrupt timing on receiver
-- Two way communication?
-- UART/I2C/SPI/PWM outputs
 
 Hardware wish list:
-- Next revision of receiver board
-- Power supply for transmitter suitable for battery operation
-    - Voltage monitoring?
-- Try out switching between multiple tx transcievers for better angle tolerance
-- Figure out which pins to expose
+- [x] Next revision of receiver board
+- [ ] Receiver mcu board: clearly mark TX and RX as IN or OUT
+- [ ] Receiver mcu board: SCL and SDA are swapped
+- [ ] Receiver mcu board: replace the diode with a mosfet
+- [ ] Power supply for transmitter suitable for battery operation
+- [ ] Try out switching between multiple tx transcievers for better angle tolerance
+- [ ] Figure out which pins to expose
 
 
-State of this thing as of 4/5/23: transmitter sends on repeat, receiver calculates the distance and angle and puts it on the display
+
+
 
 There are two main layers - RF and Ultrasonic.  The RF layer is wifi, using the ESP-NOW protocol.  The transmitting device sends a packet and the receiving one receives it (duh).
 
