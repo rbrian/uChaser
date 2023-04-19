@@ -20,6 +20,7 @@
 //----------------------Pins Configuration---------------------//
 gpio_num_t PULSE_PIN = GPIO_NUM_18;
 const int BUTTON_C_PIN = 6;
+const int TEST_PIN = 15; //pull this high breifly when a packet is received to check timing jitter
 
 //on the esp32-s3-devkitc-1 board i2c pins
 //SCL = 8
@@ -214,6 +215,7 @@ void send_packet() {
 
   //output a pulse for the transducer
   test_pulse();
+  digitalWrite(TEST_PIN, HIGH);
 
 
   //print something to the serial port
@@ -227,6 +229,7 @@ void send_packet() {
   
   //and finally update the display
   updateDisplay();
+  digitalWrite(TEST_PIN, LOW);
 }
 
 void button_setup() {
@@ -290,6 +293,8 @@ void setup() {
   rmt_setup();
   display_setup();
   button_setup();
+
+  pinMode(TEST_PIN, OUTPUT);
 
   timer.setInterval(packetInterval, send_packet); //use this to send packets all the time instead of on button presses only
   Serial.println("Setup Complete");

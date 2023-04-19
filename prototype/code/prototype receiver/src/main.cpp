@@ -111,6 +111,7 @@ void updateDisplay()
 
 void IRAM_ATTR packetReceived(const uint8_t *mac, const uint8_t *incomingData, int len)
 {
+  digitalWrite(TEST_PIN, HIGH);
   //this assumes all packets are a ping, if there are other kinds we should differentiate between them
   memcpy(&packet, incomingData, sizeof(packet));
 
@@ -179,6 +180,7 @@ void reset()
   waitingForPacket = true;
   // disable the receivers until the next packet shows up
   digitalWrite(SQUELCH_PIN, HIGH);
+  digitalWrite(TEST_PIN, LOW);
 }
 
 bool waitForPacket()
@@ -215,7 +217,7 @@ void display_setup()
   updateDisplay();
 }
 
-void esp_now_setup()
+void startEspNow()
 {
   // Turn on wifi in station mode
   WiFi.mode(WIFI_STA);
@@ -248,6 +250,7 @@ void esp_now_setup()
   esp_now_register_recv_cb(packetReceived);
 }
 
+
 void wifiButtonPress()
 {
   Serial.println("Wifi button pushed");
@@ -255,8 +258,8 @@ void wifiButtonPress()
     //Stop the AP and webserver
     //todo: if the interrupts were disabled, turn them back on
     LED::GetInstance()->SetLED(CRGB::Red);
+    AccessPoint::GetInstance()->stop();   
     progState = WAITINGFORPACKET;
-    AccessPoint::GetInstance()->stop();
   }
   else {
     //Start the AP and webserver
@@ -279,7 +282,7 @@ void pairingButtonPress(){
   //when the transmitter gets it, it should update it's target mac address to this receiver's mac address
   //receiver can just go back to listening mode
 
-    //the values sent out in this thing are set in esp_now_setup()+
+    //the values sent out in this thing are set in startEspNow()+
     esp_err_t result = esp_now_send(pairingAddress, (uint8_t *) &pairing, sizeof(pairing));
 
     if (result == ESP_OK) {
@@ -297,7 +300,7 @@ void pairingButtonPress(){
 void setup()
 {
   Serial.begin(115200);
-  esp_now_setup();
+  startEspNow();
   display_setup();
 
   LED::GetInstance()->Setup();
@@ -313,6 +316,8 @@ void setup()
 
   wifiButton.attachClick(wifiButtonPress);
   pairingButton.attachClick(pairingButtonPress);
+
+  pinMode(TEST_PIN, OUTPUT);
 
   pinMode(SQUELCH_PIN, OUTPUT);
   digitalWrite(SQUELCH_PIN, HIGH);

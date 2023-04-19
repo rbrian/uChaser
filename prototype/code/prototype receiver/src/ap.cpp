@@ -88,7 +88,8 @@ void AccessPoint::start()
 void AccessPoint::stop()
 {
   Serial.println("Disabling Wifi");
-  WiFi.softAPdisconnect(true);
+  //WiFi.softAPdisconnect(true);
+  WiFi.mode(WIFI_MODE_STA); //the line above stopped esp-now also, this way is apparently better
   server.end();
 
   Active = false;
