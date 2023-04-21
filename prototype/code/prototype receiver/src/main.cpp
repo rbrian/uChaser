@@ -28,6 +28,10 @@ volatile long lastRightMicros = 0;
 volatile bool leftIntWaiting = false;
 volatile bool rightIntWaiting = false;
 
+const int STOP = 0;
+const int GO = 1;
+const int LOST = 2;
+
 int angle = 0;
 int distance = 0;
 
@@ -250,7 +254,6 @@ void startEspNow()
   esp_now_register_recv_cb(packetReceived);
 }
 
-
 void wifiButtonPress()
 {
   Serial.println("Wifi button pushed");
@@ -297,6 +300,42 @@ void pairingButtonPress(){
   progState = WAITINGFORPACKET;
 }
 
+void sendUART(int stat, int dist, int ang){
+  //output the relevant data
+  //structure is !status,distance,angle,tbd,tbd;
+  //status will be one of: stop, go, lost
+  String statusString;
+  switch (stat){
+    case GO:
+      statusString = "go";
+      break;
+    case STOP:
+      statusString = "stop";
+      break;
+    case LOST:
+      statusString = "lost";
+      break;
+  }
+
+  Serial1.print("!");
+  Serial1.print(statusString);
+  Serial1.print(",");
+  Serial1.print(dist);
+  Serial1.print(",");
+  Serial1.print(ang);
+  Serial1.println(";");
+
+  Serial.print(stat);
+
+  Serial.print("!");
+  Serial.print(statusString);
+  Serial.print(",");
+  Serial.print(dist);
+  Serial.print(",");
+  Serial.print(ang);
+  Serial.println(";");
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -330,7 +369,8 @@ void setup()
 
   
 
-  Serial.println("Setup Complete");
+  Serial.println("Setup Complete"); //usb serial
+  Serial1.begin(115200, SERIAL_8N1, UART_RX_PIN, UART_TX_PIN); //serial output for other devices
 
   
 }
@@ -361,6 +401,7 @@ void loop()
     {
       // If it timed out, we should reset everything and go back to waiting for a packet
       updateDisplay();
+      sendUART(LOST, 0, 0);
       reset();
       progState = WAITINGFORPACKET;
     }
@@ -376,6 +417,7 @@ void loop()
     // Serial.println("Doing math");
     // once we get to this state, just do the math once, then reset for a new loop
     doMath();
+    sendUART(GO, distance, angle);
     updateDisplay();
     reset();
     progState = WAITINGFORPACKET;
