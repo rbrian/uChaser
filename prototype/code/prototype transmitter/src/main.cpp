@@ -18,7 +18,7 @@
 
 
 //----------------------Pins Configuration---------------------//
-gpio_num_t PULSE_PIN = GPIO_NUM_18;
+gpio_num_t PULSE_PIN = GPIO_NUM_1;
 const int BUTTON_C_PIN = 6;
 const int TEST_PIN = 15; //pull this high breifly when a packet is received to check timing jitter
 
