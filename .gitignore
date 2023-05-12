@@ -6,3 +6,11 @@ prototype/Boards/Receive US/Receive US-backups/
 prototype/Boards/uFinder.pretty/.svg2shenzhen-cache/
 
 prototype/Boards/Receive US v2/Receive US v2-backups/
+
+prototype/code/prototype receiver/.pio
+
+prototype/code/prototype transmitter/.pio
+
+prototype/code/prototype receiver/.vscode
+
+prototype/code/prototype transmitter/.vscode
